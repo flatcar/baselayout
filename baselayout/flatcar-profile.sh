@@ -1,4 +1,4 @@
-# /usr/share/baselayout/coreos-profile.sh
+# /usr/share/baselayout/flatcar-profile.sh
 
 # Only print for interactive shells.
 if [[ $- == *i* ]]; then
