@@ -1,4 +1,4 @@
-" Minimal configuration file for Vim on CoreOS
+" Minimal configuration file for Vim on Flatcar
 "
 " The vim package is installed with USE=minimal to avoid installing lots of
 " extra files but that doesn't mean we like vim acting as if it were vi.
