@@ -34,6 +34,6 @@ install:
 	# FHS compatibility symlinks stuff
 	ln -snf /var/tmp $(DESTDIR)/usr/tmp
 	# backwards compatibility for /etc/motd
-	ln -snf /run/coreos/motd $(DESTDIR)/usr/share/baselayout/motd
+	ln -snf /run/flatcar/motd $(DESTDIR)/usr/share/baselayout/motd
 
 .PHONY: all clean install
