@@ -6,4 +6,4 @@ ConditionPathIsReadWrite=/etc
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/coreos-tmpfiles
+ExecStart=/usr/sbin/flatcar-tmpfiles
