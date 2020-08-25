@@ -20,6 +20,7 @@ tape:x:26:root
 video:x:27:root
 input:x:28:
 lock:x:29:
+render:x:30:
 kvm:x:78:
 cdrw:x:80:
 usb:x:85:
@@ -45,6 +46,5 @@ portage:x:250:core
 tss:x:252:tss
 utmp:x:406:
 core:x:500:
-render:x:999:
 nogroup:x:65533:
 nobody:x:65534:
