@@ -45,5 +45,6 @@ portage:x:250:core
 tss:x:252:tss
 utmp:x:406:
 core:x:500:
+render:x:999:
 nogroup:x:65533:
 nobody:x:65534:
