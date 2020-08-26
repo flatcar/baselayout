@@ -20,6 +20,7 @@ tape:x:26:root
 video:x:27:root
 input:x:28:
 lock:x:29:
+render:x:30:
 kvm:x:78:
 cdrw:x:80:
 usb:x:85:
