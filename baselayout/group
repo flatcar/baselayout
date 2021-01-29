@@ -43,7 +43,7 @@ systemd-bus-proxy:x:246:
 systemd-journal:x:248:core
 dialout:x:249:
 portage:x:250:core
-tss:x:252:tss
+tss:x:252:
 utmp:x:406:
 core:x:500:
 nogroup:x:65533:
