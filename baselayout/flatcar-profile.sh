@@ -32,7 +32,7 @@ if [[ $- == *i* ]]; then
 		)
 	fi
 
-	FAILED=$(systemctl list-units --state=failed --no-legend)
+	FAILED=$(systemctl list-units --state=failed --no-legend | tr '●' ' ')
 	if [[ ! -z "${FAILED}" ]]; then
 		COUNT=$(wc -l <<<"${FAILED}")
 		echo -e "Failed Units: \033[31m${COUNT}\033[39m"
