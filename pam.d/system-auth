@@ -1,11 +1,14 @@
 auth		required	pam_env.so
+auth		requisite	pam_faillock.so preauth
 auth		sufficient	pam_unix.so try_first_pass likeauth nullok
+auth		[default=die]	pam_faillock.so authfail
 auth		sufficient	pam_sss.so use_first_pass
 auth		required	pam_deny.so
 
 account		required	pam_unix.so
 # Don't fail if the user is unknown to sssd or if sssd isn't running
 account		required	pam_sss.so ignore_unknown_user ignore_authinfo_unavail
+account		required	pam_faillock.so
 account		optional	pam_permit.so
 
 password	sufficient	pam_unix.so try_first_pass nullok sha512 shadow minlen=8
