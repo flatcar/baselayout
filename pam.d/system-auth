@@ -1,7 +1,7 @@
 auth		required	pam_env.so
-auth		requisite	pam_faillock.so preauth
+auth		requisite	pam_faillock.so preauth deny=5 unlock_time=60 fail_interval=120
 auth		sufficient	pam_unix.so try_first_pass likeauth nullok
-auth		[default=die]	pam_faillock.so authfail
+auth		[default=die]	pam_faillock.so authfail deny=5 unlock_time=60 fail_interval=120
 auth		sufficient	pam_sss.so use_first_pass
 auth		required	pam_deny.so
 
