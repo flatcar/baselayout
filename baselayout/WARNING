@@ -1,0 +1,4 @@
+systemd-coredump, system-timesync and systemd-oom were dynamically
+allocated for some time, so there users/groups were possibly allocated
+IDs 997, 998 and 999. So when adding new users and groups, let's stay
+away from this range of IDs.
