@@ -1,3 +1,9 @@
+To ensure stable user ID allocations, the acct-user|group sysuser files
+are used. In case a package uses its own sysuser file with a dynamic
+allocation, we should add it's allocated entry from
+/usr/share/baselayout/passwd|group here to ensure that the ID is
+stable.
+
 systemd-coredump, system-timesync and systemd-oom were dynamically
 allocated for some time, so there users/groups were possibly allocated
 IDs 997, 998 and 999. So when adding new users and groups, let's stay

@@ -27,9 +27,6 @@ usb:x:85:
 users:x:100:
 sudo:x:150:
 netperf:x:168:
-systemd-coredump:x:194:
-systemd-timesync:x:195:
-systemd-oom:x:198:
 messagebus:x:201:
 syslog:x:202:
 ntp:x:203:
@@ -48,7 +45,6 @@ systemd-journal:x:248:core
 dialout:x:249:
 portage:x:250:core
 tss:x:252:
-dnsmasq:x:275:
 sgx:x:405:
 utmp:x:406:
 core:x:500:
