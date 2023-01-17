@@ -16,18 +16,23 @@ mkdir -p "${ROOT}/etc"
 
 # readable files
 umask 022
-if [[ ! -e "${ROOT}/etc/passwd" ]]; then
-    grep -E -e "^(${COPY_USERS}):" "${BASE}/passwd" > "${ROOT}/etc/passwd"
-fi
-if [[ ! -e "${ROOT}/etc/group" ]]; then
-    grep -E -e "^(${COPY_GROUPS}):" "${BASE}/group" > "${ROOT}/etc/group"
-fi
+# Output those lines in BASE/passwd (that are to be copied) when their user/group names are not in /etc/passwd already,
+# and append the entries from BASE/passwd to /etc/passwd.
+# But since we don't want lines/half lines being added also be used as patterns, we first read the file and in a second
+# step write to it. (We are fine if /etc/passwd doesn't exist as this will result in no patterns. As patterns have the
+# filtering out function, no patterns means that every line will match.)
+PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/passwd" | sed 's/^/\^/' | sed 's/$/:.*$/')
+grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_USERS}):" "${BASE}/passwd") >> "${ROOT}/etc/passwd"
+PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/group" | sed 's/^/\^/' | sed 's/$/:.*$/')
+grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_GROUPS}):" "${BASE}/group") >> "${ROOT}/etc/group"
 
 # secure files
 umask 027
-if [[ ! -e "${ROOT}/etc/shadow" ]]; then
-    grep -E -e "^(${COPY_USERS}):" "${BASE}/shadow" > "${ROOT}/etc/shadow"
-fi
-if [[ ! -e "${ROOT}/etc/gshadow" ]]; then
-    grep -E -e "^(${COPY_GROUPS}):" "${BASE}/gshadow" > "${ROOT}/etc/gshadow"
-fi
+PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/shadow" | sed 's/^/\^/' | sed 's/$/:.*$/')
+grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_USERS}):" "${BASE}/shadow") >> "${ROOT}/etc/shadow"
+PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/gshadow" | sed 's/^/\^/' | sed 's/$/:.*$/')
+grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_GROUPS}):" "${BASE}/gshadow") >> "${ROOT}/etc/gshadow"
+
+# The script runs without set -euo pipefail and allows grep to return 1, thus the last statement must not be grep
+# because it would propagate the exit code 1 and let the systemd unit fail.
+exit 0
