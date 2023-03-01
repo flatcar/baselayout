@@ -22,6 +22,14 @@ umask 022
 
 unset ROOTPATH
 
+for sh in /usr/share/profile.d/*.sh ; do
+	[ -r "$sh" ] && . "$sh"
+done
+for sh in /etc/profile.d/*.sh ; do
+	[ -r "$sh" ] && . "$sh"
+done
+unset sh
+
 if [ -n "${BASH_VERSION-}" ] ; then
 	# Newer bash ebuilds include /etc/bash/bashrc which will setup PS1
 	# including color.  We leave out color here because not all
@@ -46,11 +54,3 @@ else
 	# understand sequences such as \h, don't put anything special in it.
 	PS1="${USER:-$(whoami 2>/dev/null)}@$(uname -n 2>/dev/null) \$ "
 fi
-
-for sh in /usr/share/profile.d/*.sh ; do
-	[ -r "$sh" ] && . "$sh"
-done
-for sh in /etc/profile.d/*.sh ; do
-	[ -r "$sh" ] && . "$sh"
-done
-unset sh
