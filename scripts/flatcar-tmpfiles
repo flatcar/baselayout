@@ -8,9 +8,9 @@
 ROOT="${1:-$ROOT}"
 BASE="${2:-${ROOT}/usr/share/baselayout}"
 
-# Users/Groups to copy so they can be modified
+# Users/Groups to copy so they can be modified (systemd-journal is also needed for systemd-tmpfiles)
 COPY_USERS="root|core"
-COPY_GROUPS="root|core|docker|sudo|wheel"
+COPY_GROUPS="root|core|docker|sudo|wheel|systemd-journal"
 
 mkdir -p "${ROOT}/etc"
 
