@@ -9,4 +9,4 @@ ConditionPathIsReadWrite=/etc
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/sbin/flatcar-tmpfiles
+ExecStart=/usr/bin/flatcar-tmpfiles

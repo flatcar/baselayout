@@ -5,31 +5,36 @@
 
 LIBDIRS ?= lib
 
+INSTALL       ?= install
+INSTALL_DIR    = $(INSTALL) -m 0755 -d
+INSTALL_EXE    = $(INSTALL) -m 0755
+INSTALL_FILE   = $(INSTALL) -m 0644
+INSTALL_SECURE = $(INSTALL) -m 0600
+
 DESTDIR =
-ETC_DIRS = env.d
-LIB_DIRS = modprobe.d pam.d sysctl.d tmpfiles.d
-SHARE_DIRS = baselayout vim
 
-MKDIR = mkdir -m 0755 -p
+all: share/baselayout/shadow share/baselayout/gshadow
 
-all: baselayout/shadow baselayout/gshadow
-
-baselayout/shadow: baselayout/passwd Makefile
+share/baselayout/shadow: share/baselayout/passwd Makefile
 	awk 'BEGIN {FS = ":"} { print $$1 ":*:15887:0:::::" }' <$< >$@
 
-baselayout/gshadow: baselayout/group Makefile
+share/baselayout/gshadow: share/baselayout/group Makefile
 	awk 'BEGIN {FS = ":"} { print $$1 ":*::" $$4 }' <$< >$@
 
 clean:
-	rm -f baselayout/shadow baselayout/gshadow
+	rm -f share/baselayout/shadow share/baselayout/gshadow
 
 install:
-	mkdir -m 0755 -p $(DESTDIR)/etc
-	cp -PR $(ETC_DIRS) $(DESTDIR)/etc
-	mkdir -m 0755 -p $(DESTDIR)/usr/lib
-	cp -PR $(LIB_DIRS) $(DESTDIR)/usr/lib
-	mkdir -m 0755 -p $(DESTDIR)/usr/share
-	cp -PR $(SHARE_DIRS) $(DESTDIR)/usr/share
+	if [[ -d bin ]]; then \
+		$(INSTALL_DIR) $(DESTDIR)/usr/bin; \
+		cp -pPR bin/* $(DESTDIR)/usr/bin/; \
+	fi
+	$(INSTALL_DIR) $(DESTDIR)/etc
+	cp -pPR etc/* $(DESTDIR)/etc/
+	$(INSTALL_DIR) $(DESTDIR)/usr/lib
+	cp -pPR lib/* $(DESTDIR)/usr/lib/
+	$(INSTALL_DIR) $(DESTDIR)/usr/share
+	cp -pPR share/* $(DESTDIR)/usr/share/
 	# no secrets in our shadow or sudoers but this is the proper way
 	chmod 0440 $(DESTDIR)/usr/share/baselayout/sudoers
 	chmod 0640 $(DESTDIR)/usr/share/baselayout/*shadow
@@ -39,11 +44,11 @@ install:
 	ln -snf /run/flatcar/motd $(DESTDIR)/usr/share/baselayout/motd
 
 layout:
-	for d in bin local local/bin; do $(MKDIR) "$(DESTDIR)/usr/$${d}" || exit 1; done
-	for d in $(LIBDIRS); do $(MKDIR) "$(DESTDIR)/usr/$${d}" "$(DESTDIR)/usr/local/$${d}" || exit 1; done
+	for d in bin local local/bin; do $(INSTALL_DIR) "$(DESTDIR)/usr/$${d}" || exit 1; done
+	for d in $(LIBDIRS); do $(INSTALL_DIR) "$(DESTDIR)/usr/$${d}" "$(DESTDIR)/usr/local/$${d}" || exit 1; done
 	for d in bin $(LIBDIRS); do ln -snf "usr/$${d}" "$(DESTDIR)/$${d}" || exit 1; done
 	for d in usr usr/local; do ln -snf bin "$(DESTDIR)/$${d}/sbin" || exit 1; done
 	# created by systemd's tmpfiles.d/tmp.conf but that is installed later
-	mkdir -m 1777 -p $(DESTDIR)/tmp $(DESTDIR)/var/tmp
+	$(INSTALL) -m 1777 -d $(DESTDIR)/tmp $(DESTDIR)/var/tmp
 
 .PHONY: all clean install layout
