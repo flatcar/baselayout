@@ -3,6 +3,7 @@
 # Copyright 2014 The CoreOS Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# used in "all" and "layout" targets
 LIBDIRS ?= lib
 
 INSTALL       ?= install
@@ -13,7 +14,12 @@ INSTALL_SECURE = $(INSTALL) -m 0600
 
 DESTDIR =
 
-all: share/baselayout/shadow share/baselayout/gshadow
+all: lib/tmpfiles.d/baselayout-usr.conf share/baselayout/shadow share/baselayout/gshadow
+
+lib/tmpfiles.d/baselayout-usr.conf: Makefile
+	for d in $(LIBDIRS); do \
+		echo "L+	/$${d}	-	-	-	-	usr/$${d}"; \
+	done >$@
 
 share/baselayout/shadow: share/baselayout/passwd Makefile
 	awk 'BEGIN {FS = ":"} { print $$1 ":*:15887:0:::::" }' <$< >$@
@@ -22,7 +28,7 @@ share/baselayout/gshadow: share/baselayout/group Makefile
 	awk 'BEGIN {FS = ":"} { print $$1 ":*::" $$4 }' <$< >$@
 
 clean:
-	rm -f share/baselayout/shadow share/baselayout/gshadow
+	rm -f lib/tmpfiles.d/baselayout-usr.conf share/baselayout/shadow share/baselayout/gshadow
 
 install:
 	if [[ -d bin ]]; then \
