@@ -50,10 +50,26 @@ install:
 	ln -snf /run/flatcar/motd $(DESTDIR)/usr/share/baselayout/motd
 
 layout:
-	for d in bin local local/bin; do $(INSTALL_DIR) "$(DESTDIR)/usr/$${d}" || exit 1; done
-	for d in $(LIBDIRS); do $(INSTALL_DIR) "$(DESTDIR)/usr/$${d}" "$(DESTDIR)/usr/local/$${d}" || exit 1; done
-	for d in bin $(LIBDIRS); do ln -snf "usr/$${d}" "$(DESTDIR)/$${d}" || exit 1; done
-	for d in usr usr/local; do ln -snf bin "$(DESTDIR)/$${d}/sbin" || exit 1; done
+	# bin directories
+	for d in bin local/bin; do \
+		$(INSTALL_DIR) $(DESTDIR)/usr/$${d} || exit 1; \
+		$(INSTALL_DIR) $(DESTDIR)/usr/lib/debug/usr/$${d} || exit 1; \
+	done
+	# lib directories
+	for d in $(LIBDIRS); do \
+		$(INSTALL_DIR) $(DESTDIR)/usr/$${d} $(DESTDIR)/usr/local/$${d} || exit 1; \
+		$(INSTALL_DIR) $(DESTDIR)/usr/lib/debug/usr/$${d} $(DESTDIR)/usr/lib/debug/usr/local/$${d} || exit 1; \
+	done
+	# bin and lib "/ to /usr" symlinks
+	for d in bin $(LIBDIRS); do \
+		ln -snf "usr/$${d}" "$(DESTDIR)/$${d}" || exit 1; \
+		ln -snf "usr/$${d}" "$(DESTDIR)/usr/lib/debug/$${d}" || exit 1; \
+	done
+	# sbin to bin symlinks
+	for d in sbin usr/sbin usr/local/sbin; do \
+		ln -snf bin "$(DESTDIR)/$${d}" || exit 1; \
+		ln -snf bin "$(DESTDIR)/usr/lib/debug/$${d}" || exit 1; \
+	done
 	# created by systemd's tmpfiles.d/tmp.conf but that is installed later
 	$(INSTALL) -m 1777 -d $(DESTDIR)/tmp $(DESTDIR)/var/tmp
 
