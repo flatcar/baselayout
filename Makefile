@@ -49,26 +49,20 @@ install:
 	# backwards compatibility for /etc/motd
 	ln -snf /run/flatcar/motd $(DESTDIR)/usr/share/baselayout/motd
 
+ALL_DIRS = $(foreach dir, bin local/bin local/sbin $(foreach dir2, $(LIBDIRS), $(dir2) local/$(dir2)),usr/$(dir) usr/lib/debug/usr/$(dir))
+# target:linkname pairs
+ALL_LINKS = \
+	$(foreach dir, bin $(LIBDIRS),usr/$(dir):$(dir) usr/$(dir):usr/lib/debug/$(dir)) \
+	usr/bin:sbin usr/bin:usr/lib/debug/sbin bin:usr/sbin bin:usr/lib/debug/usr/sbin
+
 layout:
-	# bin directories
-	for d in bin local/bin; do \
-		$(INSTALL_DIR) $(DESTDIR)/usr/$${d} || exit 1; \
-		$(INSTALL_DIR) $(DESTDIR)/usr/lib/debug/usr/$${d} || exit 1; \
+	for d in $(ALL_DIRS); do \
+		$(INSTALL_DIR) $(DESTDIR)/$${d} || exit 1; \
 	done
-	# lib directories
-	for d in $(LIBDIRS); do \
-		$(INSTALL_DIR) $(DESTDIR)/usr/$${d} $(DESTDIR)/usr/local/$${d} || exit 1; \
-		$(INSTALL_DIR) $(DESTDIR)/usr/lib/debug/usr/$${d} $(DESTDIR)/usr/lib/debug/usr/local/$${d} || exit 1; \
-	done
-	# bin and lib "/ to /usr" symlinks
-	for d in bin $(LIBDIRS); do \
-		ln -snf "usr/$${d}" "$(DESTDIR)/$${d}" || exit 1; \
-		ln -snf "usr/$${d}" "$(DESTDIR)/usr/lib/debug/$${d}" || exit 1; \
-	done
-	# sbin to bin symlinks
-	for d in sbin usr/sbin usr/local/sbin; do \
-		ln -snf bin "$(DESTDIR)/$${d}" || exit 1; \
-		ln -snf bin "$(DESTDIR)/usr/lib/debug/$${d}" || exit 1; \
+	for p in $(ALL_LINKS); do \
+		t=$${p%%:*}; \
+		f=$${p#*:}; \
+		ln -snf "$${t}" "$(DESTDIR)/$${f}" || exit 1; \
 	done
 	# created by systemd's tmpfiles.d/tmp.conf but that is installed later
 	$(INSTALL) -m 1777 -d $(DESTDIR)/tmp $(DESTDIR)/var/tmp
