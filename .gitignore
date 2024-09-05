@@ -1,2 +1,3 @@
-baselayout/shadow
-baselayout/gshadow
+/lib/tmpfiles.d/baselayout-libdirs.conf
+/share/baselayout/shadow
+/share/baselayout/gshadow
