@@ -12,26 +12,33 @@ BASE="${2:-${ROOT}/usr/share/baselayout}"
 COPY_USERS="root|core"
 COPY_GROUPS="root|core|docker|sudo|wheel|systemd-journal"
 
+# New function to update an etc file if new entries are found
+# Pipeline stages:
+# 1. grep -E filters lines from the reference file (located at ${BASE}/${file}) matching the specified pattern.
+# 2. The output is piped to grep -v -x -f, which uses process substitution to generate exclusion patterns
+#    based on the first field of the corresponding file in ${ROOT}/etc. This removes any entries already present.
+# 3. If the resulting new_entries variable is non-empty, these entries are appended to the target file.
+update_file() {
+    local file="$1"
+    local pattern="$2"
+    local new_entries
+    new_entries=$(grep -E -e "^(${pattern}):" "${BASE}/${file}" | grep -v -x -f <( [ -f "${ROOT}/etc/${file}" ] && cut -s -d ":" -f 1 "${ROOT}/etc/${file}" | sed 's/^/\^/' | sed 's/$/:.*$/' ))
+    if [ -n "$new_entries" ]; then
+        echo "$new_entries" >> "${ROOT}/etc/${file}"
+    fi
+}
+
 mkdir -p "${ROOT}/etc"
 
 # readable files
 umask 022
-# Output those lines in BASE/passwd (that are to be copied) when their user/group names are not in /etc/passwd already,
-# and append the entries from BASE/passwd to /etc/passwd.
-# But since we don't want lines/half lines being added also be used as patterns, we first read the file and in a second
-# step write to it. (We are fine if /etc/passwd doesn't exist as this will result in no patterns. As patterns have the
-# filtering out function, no patterns means that every line will match.)
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/passwd" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_USERS}):" "${BASE}/passwd") >> "${ROOT}/etc/passwd"
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/group" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_GROUPS}):" "${BASE}/group") >> "${ROOT}/etc/group"
+update_file "passwd" "${COPY_USERS}"
+update_file "group" "${COPY_GROUPS}"
 
 # secure files
 umask 027
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/shadow" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_USERS}):" "${BASE}/shadow") >> "${ROOT}/etc/shadow"
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/gshadow" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_GROUPS}):" "${BASE}/gshadow") >> "${ROOT}/etc/gshadow"
+update_file "shadow" "${COPY_USERS}"
+update_file "gshadow" "${COPY_GROUPS}"
 
 # The script runs without set -euo pipefail and allows grep to return 1, thus the last statement must not be grep
 # because it would propagate the exit code 1 and let the systemd unit fail.
