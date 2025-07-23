@@ -27,7 +27,7 @@ usb:x:85:
 users:x:100:
 sudo:x:150:
 netperf:x:168:
-messagebus:x:201:
+messagebus:x:101:
 syslog:x:202:
 ntp:x:203:
 sshd:x:204:
