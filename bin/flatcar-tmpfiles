@@ -3,6 +3,7 @@
 # - copy the docker group to /etc because docker reads /etc/group directly
 # - copy the sudo and wheel groups to /etc so that new uses can be added to them
 # - copy the core and root users to /etc so the passwd utility works correctly
+# - copy the shadow group to /etc so the shadow and gshadow files can be owned by the group
 
 # Inherit root from environment or command line
 ROOT="${1:-$ROOT}"
@@ -10,7 +11,7 @@ BASE="${2:-${ROOT}/usr/share/baselayout}"
 
 # Users/Groups to copy so they can be modified (systemd-journal is also needed for systemd-tmpfiles)
 COPY_USERS="root|core"
-COPY_GROUPS="root|core|docker|sudo|wheel|systemd-journal"
+COPY_GROUPS="root|core|docker|sudo|wheel|systemd-journal|shadow"
 
 mkdir -p "${ROOT}/etc"
 
@@ -32,6 +33,9 @@ PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/shadow" | sed 's/^/\^/' | sed 's/$/:.
 grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_USERS}):" "${BASE}/shadow") >> "${ROOT}/etc/shadow"
 PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/gshadow" | sed 's/^/\^/' | sed 's/$/:.*$/')
 grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_GROUPS}):" "${BASE}/gshadow") >> "${ROOT}/etc/gshadow"
+
+SHADOW_GID=$(grep '^shadow:' "${ROOT}/etc/group" | cut -d: -f3)
+chown ":${SHADOW_GID}" "${ROOT}"/etc/{g,}shadow || exit 1
 
 # The script runs without set -euo pipefail and allows grep to return 1, thus the last statement must not be grep
 # because it would propagate the exit code 1 and let the systemd unit fail.
