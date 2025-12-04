@@ -15,24 +15,44 @@ COPY_GROUPS="root|core|docker|sudo|wheel|systemd-journal|shadow"
 
 mkdir -p "${ROOT}/etc"
 
+# Output those lines in BASE/passwd (that are to be copied) when their
+# user names are not in /etc/passwd already, and append the entries
+# from BASE/passwd to /etc/passwd. We are fine if /etc/passwd doesn't
+# exist as this will result in no patterns. As patterns have the
+# filtering out function, no patterns means that every line will
+# match.
+function copy_from_base_to_etc {
+    local file=${1}; shift # passwd, group, shadow, gshadow
+    local copy_re=${1}; shift # either ${COPY_GROUPS} or ${COPY_USERS}
+
+    local root_file="${ROOT}/etc/${file}" base_file="${BASE}/${file}" pattern_file=/dev/null tmp_file=''
+
+    if [[ -e ${root_file} ]]; then
+        # It may fail if with /tmp.
+        tmp_file=$(mktemp --tmpdir="${ROOT}/etc")
+        cut --only-delimited --delimiter=":" --fields=1 "${root_file}" | \
+            sed -e 's/$/:.*/' >"${tmp_file}"
+        if [[ -s ${tmp_file} ]]; then
+            pattern_file=${tmp_file}
+        fi
+    fi
+    grep \
+        --invert-match \
+        --line-regexp \
+        --file "${pattern_file}" \
+        <(grep --extended-regexp --regexp="^(${copy_re}):" "${base_file}") >>"${root_file}"
+    if [[ -n ${tmp_file} ]]; then rm -f "${tmp_file}"; fi
+}
+
 # readable files
 umask 022
-# Output those lines in BASE/passwd (that are to be copied) when their user/group names are not in /etc/passwd already,
-# and append the entries from BASE/passwd to /etc/passwd.
-# But since we don't want lines/half lines being added also be used as patterns, we first read the file and in a second
-# step write to it. (We are fine if /etc/passwd doesn't exist as this will result in no patterns. As patterns have the
-# filtering out function, no patterns means that every line will match.)
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/passwd" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_USERS}):" "${BASE}/passwd") >> "${ROOT}/etc/passwd"
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/group" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_GROUPS}):" "${BASE}/group") >> "${ROOT}/etc/group"
+copy_from_base_to_etc passwd "${COPY_USERS}"
+copy_from_base_to_etc group "${COPY_GROUPS}"
 
 # secure files
 umask 027
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/shadow" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_USERS}):" "${BASE}/shadow") >> "${ROOT}/etc/shadow"
-PATTERNS=$(cut -s -d ":" -f 1 "${ROOT}/etc/gshadow" | sed 's/^/\^/' | sed 's/$/:.*$/')
-grep -v -x -f <(echo "${PATTERNS}") <(grep -E -e "^(${COPY_GROUPS}):" "${BASE}/gshadow") >> "${ROOT}/etc/gshadow"
+copy_from_base_to_etc shadow "${COPY_USERS}"
+copy_from_base_to_etc gshadow "${COPY_GROUPS}"
 
 SHADOW_GID=$(grep '^shadow:' "${ROOT}/etc/group" | cut -d: -f3)
 chown ":${SHADOW_GID}" "${ROOT}"/etc/{g,}shadow || exit 1
